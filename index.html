@@ -2,16 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>&num;rewriteInC</title>
+  <title>&num;rewriteInC - Automated C SDK Generation</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="#rewriteInC">
+  <meta name="description" content="Generate highly optimized, zero-dependency C SDKs directly from your OpenAPI specifications.">
   <link rel="author" href="https://github.com/SamuelMarks"/>
   <link rel="canonical" href="https://rewriteInC.io"/>
-  <meta name="keywords" content="c c89 #rewriteInC cross-platform interoperability futureproofing">
+  <meta name="keywords" content="c c89 openapi sdk generator cross-platform #rewriteInC">
   <link rel="icon" type="image/svg+xml" href="public/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bright-blue: oklch(51.01% 0.274 263.83);
@@ -24,6 +24,7 @@
       --gray-900: oklch(19.37% 0.006 300.98);
       --gray-700: oklch(36.98% 0.014 302.71);
       --gray-400: oklch(70.9% 0.015 304.04);
+      --gray-100: oklch(96.3% 0.005 300.98);
       
       --bg-body: #f6f8fa;
       --bg-surface: #ffffff;
@@ -31,6 +32,14 @@
       --border-color-hover: #8c959f;
       --link-color: #0969da;
       --text-muted: #57606a;
+      
+      --btn-primary-bg: #2da44e;
+      --btn-primary-hover: #2c974b;
+      --btn-primary-text: #ffffff;
+      
+      --btn-outline-text: #24292f;
+      --btn-outline-border: #d0d7de;
+      --btn-outline-hover-bg: #f3f4f6;
 
       --red-to-pink-to-purple-vertical-gradient: linear-gradient(
         180deg,
@@ -59,6 +68,7 @@
         --gray-900: #e6edf3;
         --gray-700: #8b949e;
         --gray-400: #6e7681;
+        --gray-100: #161b22;
         
         --bg-body: #0d1117;
         --bg-surface: #161b22;
@@ -66,6 +76,14 @@
         --border-color-hover: #8b949e;
         --link-color: #2f81f7;
         --text-muted: #7d8590;
+
+        --btn-primary-bg: #238636;
+        --btn-primary-hover: #2ea043;
+        --btn-primary-text: #ffffff;
+
+        --btn-outline-text: #c9d1d9;
+        --btn-outline-border: #30363d;
+        --btn-outline-hover-bg: #21262d;
       }
     }
 
@@ -80,124 +98,322 @@
       height: 100%;
       background: var(--bg-body);
       color: var(--gray-900);
+      scroll-behavior: smooth;
     }
 
-    header {
-      width: 100%;
+    /* Skip Link */
+    .skip-link {
+      position: absolute;
+      inset-block-start: -40px;
+      inset-inline-start: 0;
+      background: var(--btn-primary-bg);
+      color: white;
+      padding: 8px;
+      z-index: 1000;
+      transition: inset-block-start 0.2s ease;
+    }
+    
+    .skip-link:focus {
+      inset-block-start: 0;
+    }
+
+    /* Navbar */
+    nav {
       display: flex;
-      justify-content: center;
+      justify-content: space-between;
       align-items: center;
-      padding: 2rem 1rem;
+      padding: 1rem 2rem;
       background: var(--bg-surface);
       border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 100;
     }
 
-    .header-content {
-      display: flex;
-      justify-content: space-around;
-      width: 100%;
-      max-width: 700px;
-    }
-
-    .header-content h1 {
-      font-size: 3.125rem;
+    .nav-brand {
+      font-family: "Inter Tight", sans-serif;
+      font-weight: 700;
+      font-size: 1.25rem;
       color: var(--gray-900);
-      font-weight: 500;
-      line-height: 100%;
-      letter-spacing: -0.125rem;
-      margin: 0;
-      margin-top: 1.75rem;
-      font-family: "Inter Tight", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-        Helvetica, Arial, sans-serif;
+      text-decoration: none;
     }
 
-    .header-content p {
-      margin: 0;
-      color: var(--gray-700);
-      margin-top: 1.5rem;
-    }
-
-    .divider {
-      width: 1px;
-      background: var(--red-to-pink-to-purple-vertical-gradient);
-      margin-inline: 0.5rem;
-    }
-
-    .social-links {
+    .nav-links {
       display: flex;
+      gap: 1.5rem;
       align-items: center;
-      gap: 0.73rem;
-      margin-top: 1.5rem;
-      height: 100%;
     }
 
-    .social-links path {
-      transition: fill 0.3s ease;
-      fill: var(--gray-400);
+    .nav-links a {
+      color: var(--gray-700);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
     }
 
-    .social-links a:hover svg path {
-      fill: var(--gray-900);
+    .nav-links a:hover {
+      color: var(--gray-900);
     }
 
-    @media screen and (max-width: 650px) {
-      .header-content {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-      }
-      .divider {
-        height: 1px;
-        width: 100%;
-        background: var(--red-to-pink-to-purple-horizontal-gradient);
-        margin-block: 1.5rem;
-      }
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border-radius: 6px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: 0.2s ease;
+      border: 1px solid transparent;
     }
 
-    main.container {
-      max-width: 900px;
+    .btn-primary {
+      background-color: var(--btn-primary-bg);
+      color: var(--btn-primary-text) !important;
+      border-color: rgba(27, 31, 36, 0.15);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--btn-primary-hover);
+    }
+
+    .btn-outline {
+      background-color: transparent;
+      color: var(--btn-outline-text) !important;
+      border-color: var(--btn-outline-border);
+    }
+
+    .btn-outline:hover {
+      background-color: var(--btn-outline-hover-bg);
+      border-color: var(--border-color-hover);
+    }
+    
+    .btn-large {
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 6rem 1rem;
+      text-align: center;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-content {
+      max-width: 800px;
       margin: 0 auto;
-      padding: 3rem 1rem;
+      position: relative;
+      z-index: 2;
     }
 
-    .defense-box {
+    .hero h1 {
+      font-family: "Inter Tight", sans-serif;
+      font-size: 3.5rem;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero p {
+      font-size: 1.25rem;
+      color: var(--gray-700);
+      margin-bottom: 2.5rem;
+      line-height: 1.5;
+      max-width: 600px;
+      margin-inline: auto;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .hero-gradient {
+      position: absolute;
+      inset-block-start: -50%;
+      inset-inline-start: 50%;
+      transform: translateX(-50%);
+      width: 100vw;
+      height: 100vw;
+      background: radial-gradient(circle, var(--electric-violet) 0%, transparent 60%);
+      opacity: 0.05;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Main Container */
+    main.container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 4rem 1rem;
+    }
+    
+    .section-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    
+    .section-header h2 {
+      font-size: 2rem;
+      font-family: "Inter Tight", sans-serif;
+      margin-bottom: 1rem;
+    }
+    
+    .section-header p {
+      color: var(--gray-700);
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Features / Use Cases */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-bottom: 4rem;
+    }
+
+    .feature-card {
       background: var(--bg-surface);
       border: 1px solid var(--border-color);
-      border-left: 4px solid var(--electric-violet);
-      border-radius: 6px;
-      padding: 1.5rem 2rem;
-      margin-bottom: 3rem;
-      font-size: 1.05rem;
+      border-radius: 8px;
+      padding: 2rem;
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      background: var(--gray-100);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--border-color);
+    }
+    
+    .feature-icon svg {
+      fill: var(--electric-violet);
+    }
+
+    .feature-card h3 {
+      font-size: 1.25rem;
+      margin-top: 0;
+      margin-bottom: 1rem;
+    }
+
+    .feature-card p {
       color: var(--gray-700);
-      line-height: 1.5;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-    }
-    
-    .defense-box p {
       margin: 0;
+      line-height: 1.5;
+    }
+
+    /* Pricing Section */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-bottom: 4rem;
+    }
+
+    .pricing-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .pricing-card.featured {
+      border-color: var(--electric-violet);
+      box-shadow: 0 0 0 1px var(--electric-violet);
+      position: relative;
     }
     
-    .defense-box strong {
-      color: var(--gray-900);
+    .pricing-badge {
+      position: absolute;
+      inset-block-start: -12px;
+      inset-inline-start: 50%;
+      transform: translateX(-50%);
+      background: var(--electric-violet);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.75rem;
       font-weight: 600;
     }
 
-    .repo-section-title {
-      font-size: 1.2rem;
-      color: var(--gray-900);
+    .pricing-card h3 {
+      font-size: 1.5rem;
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+    }
+
+    .price {
+      font-size: 2.5rem;
+      font-weight: 700;
+      font-family: "Inter Tight", sans-serif;
+      margin-bottom: 0.5rem;
+    }
+    
+    .price span {
+      font-size: 1rem;
+      color: var(--gray-700);
+      font-weight: 400;
+    }
+
+    .pricing-desc {
+      color: var(--gray-700);
+      margin-bottom: 2rem;
+      min-height: 48px;
+    }
+
+    .pricing-features {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 2rem 0;
+      flex-grow: 1;
+    }
+
+    .pricing-features li {
       margin-bottom: 1rem;
-      font-weight: 500;
+      display: flex;
+      align-items: flex-start;
+      color: var(--gray-700);
+    }
+    
+    .pricing-features li svg {
+      margin-inline-end: 0.75rem;
+      margin-block-start: 0.2rem;
+      fill: var(--btn-primary-bg);
+      flex-shrink: 0;
+    }
+
+    /* Repo Grid (Technology Base) */
+    .repo-section-title {
+      font-size: 1.5rem;
+      color: var(--gray-900);
+      margin-bottom: 1.5rem;
+      font-family: "Inter Tight", sans-serif;
+      text-align: center;
     }
 
     .repo-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 16px;
       margin-bottom: 3rem;
-    }
-
-    .repo-grid.featured {
-      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
     }
 
     .repo-card {
@@ -222,7 +438,7 @@
 
     .repo-header svg {
       fill: var(--text-muted);
-      margin-right: 8px;
+      margin-inline-end: 8px;
     }
 
     .repo-title {
@@ -263,9 +479,7 @@
       width: 12px;
       height: 12px;
       border-radius: 50%;
-      background: #555555;
     }
-
     .lang-color.c { background: #555555; }
     .lang-color.cpp { background: #f34b7d; }
 
@@ -283,327 +497,550 @@
       fill: var(--text-muted);
     }
 
+    /* Footer */
     .site-footer {
-      text-align: center;
-      padding: 2rem 1rem;
-      color: var(--text-muted);
-      font-size: 0.875rem;
       border-top: 1px solid var(--border-color);
       background: var(--bg-surface);
+      padding: 4rem 2rem 2rem;
+    }
+    
+    .footer-grid {
+      max-width: 1000px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+    
+    .footer-brand h4 {
+      font-family: "Inter Tight", sans-serif;
+      margin-top: 0;
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    
+    .footer-brand p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      max-width: 300px;
+    }
+    
+    .footer-links h5 {
+      margin-top: 0;
+      margin-bottom: 1rem;
+      color: var(--gray-900);
+      font-size: 0.9rem;
+    }
+    
+    .footer-links ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .footer-links li {
+      margin-bottom: 0.75rem;
+    }
+    
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    
+    .footer-links a:hover {
+      color: var(--link-color);
+    }
+    
+    .footer-bottom {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
     }
 
-    .site-footer p {
-      margin: 0;
+    @media screen and (max-width: 768px) {
+      .hero h1 { font-size: 2.5rem; }
+      .hero-actions { flex-direction: column; }
+      .hero-actions .btn { width: 100%; }
+      .footer-grid { grid-template-columns: 1fr; }
+      .footer-bottom { flex-direction: column; gap: 1rem; text-align: center; }
+    }
+
+    /* CSS-Only Modals */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      z-index: 1000;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+    .modal-overlay:target {
+      opacity: 1;
+      visibility: visible;
+    }
+    .modal-backdrop-close {
+      position: absolute;
+      inset: 0;
+      cursor: default;
+      text-decoration: none;
+    }
+    .modal-content {
+      background: var(--bg-surface);
+      padding: 2.5rem;
+      border-radius: 8px;
+      max-width: 500px;
+      width: 90%;
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      transform: translateY(-20px);
+      transition: transform 0.2s ease;
+      border: 1px solid var(--border-color);
+    }
+    .modal-overlay:target .modal-content {
+      transform: translateY(0);
+    }
+    .modal-close {
+      position: absolute;
+      inset-block-start: 1rem;
+      inset-inline-end: 1.5rem;
+      text-decoration: none;
+      color: var(--gray-400);
+      font-size: 1.75rem;
+      font-weight: bold;
+      line-height: 1;
+    }
+    .modal-close:hover {
+      color: var(--gray-900);
+    }
+    .modal-content h2 {
+      margin-top: 0;
+      font-family: "Inter Tight", sans-serif;
+      margin-bottom: 1rem;
+    }
+    .modal-content p {
+      color: var(--gray-700);
+      line-height: 1.5;
+      margin-bottom: 0;
     }
   </style>
 </head>
 <body>
   <a href="#main-content" class="skip-link">Skip to main content</a>
-  <header>
-    <div class="header-content">
-      <div class="left-side">
-        <h1><code>&num;rewriteInC</code></h1>
-        <p>The future is C.</p>
-      </div>
-      <div class="divider" role="separator" aria-label="Divider"></div>
-      <div class="right-side">
-        <div class="header-patterns">
-          <!-- OS Row 1 -->
-          <div class="pattern-row" aria-label="Operating Systems: Windows, macOS, Android, Linux">
-            <svg viewBox="0 0 160 24" width="160" height="24" aria-hidden="true" fill="var(--gray-400)">
-              <!-- Windows -->
-              <path transform="translate(0, 0)" d="M0,3.4 L10.6,1.9 L10.6,11.5 L0,11.5 Z M11.8,1.7 L24,0 L24,11.5 L11.8,11.5 Z M0,12.5 L10.6,12.5 L10.6,22.1 L0,20.6 Z M11.8,12.5 L24,12.5 L24,24 L11.8,22.3 Z" />
-              <!-- Apple/macOS -->
-              <path transform="translate(40, 0)" d="M16.4,12.3 C16.4,9 19.1,7.4 19.2,7.3 C17.6,5.1 15.3,4.8 14.5,4.7 C12.6,4.5 10.7,5.8 9.7,5.8 C8.7,5.8 7.2,4.7 5.5,4.7 C3.4,4.7 1.4,5.9 0.4,7.8 C-1.8,11.6 0.9,17.3 3,20.4 C4,21.9 5.2,23.6 6.8,23.5 C8.3,23.4 8.9,22.5 10.8,22.5 C12.7,22.5 13.2,23.5 14.9,23.5 C16.5,23.5 17.5,22 18.5,20.5 C19.7,18.7 20.2,16.9 20.2,16.8 C20.1,16.8 16.4,15.3 16.4,12.3 Z M12.9,3.1 C13.7,2.1 14.3,0.7 14.1,-0.1 C12.9,0 11.4,0.7 10.5,1.7 C9.8,2.5 9.1,3.9 9.3,5.2 C10.6,5.3 12,4.5 12.9,3.1 Z" />
-              <!-- Android -->
-              <path transform="translate(80, 3) scale(0.75)" d="M17.6,5.4 L19.4,2.3 C19.6,2 19.5,1.6 19.2,1.5 C18.9,1.3 18.5,1.4 18.3,1.7 L16.5,4.8 C15.1,4.2 13.6,3.8 12,3.8 C10.4,3.8 8.9,4.2 7.5,4.8 L5.7,1.7 C5.5,1.4 5.1,1.3 4.8,1.5 C4.5,1.6 4.4,2 4.6,2.3 L6.4,5.4 C2.8,7.4 0.3,11.1 0,15.5 L24,15.5 C23.7,11.1 21.2,7.4 17.6,5.4 Z M6.5,11.9 C5.8,11.9 5.2,11.3 5.2,10.6 C5.2,9.9 5.8,9.3 6.5,9.3 C7.2,9.3 7.8,9.9 7.8,10.6 C7.8,11.3 7.2,11.9 6.5,11.9 Z M17.5,11.9 C16.8,11.9 16.2,11.3 16.2,10.6 C16.2,9.9 16.8,9.3 17.5,9.3 C18.2,9.3 18.8,9.9 18.8,10.6 C18.8,11.3 18.2,11.9 17.5,11.9 Z" />
-              <!-- Linux Terminal -->
-              <g transform="translate(120, 2)">
-                <rect width="22" height="18" rx="2" fill="none" stroke="var(--gray-400)" stroke-width="2" />
-                <path d="M 5 5 L 10 9 L 5 13" fill="none" stroke="var(--gray-400)" stroke-width="2" />
-                <line x1="12" y1="13" x2="18" y2="13" stroke="var(--gray-400)" stroke-width="2" />
-              </g>
-            </svg>
-          </div>
-          
-          <!-- OS Row 2 -->
-          <div class="pattern-row" aria-label="More Operating Systems: iOS, FreeBSD, WebAssembly, DOS">
-            <svg viewBox="0 0 160 24" width="160" height="24" aria-hidden="true" fill="var(--gray-400)">
-              <!-- iOS (Phone Outline) -->
-              <g transform="translate(2, 0)">
-                <rect width="14" height="22" rx="3" fill="none" stroke="var(--gray-400)" stroke-width="2" />
-                <line x1="5" y1="3" x2="9" y2="3" stroke="var(--gray-400)" stroke-width="1.5" stroke-linecap="round" />
-                <circle cx="7" cy="19" r="1.5" />
-              </g>
-              <!-- FreeBSD/BSD -->
-              <g transform="translate(36, 2)">
-                <circle cx="10" cy="10" r="8" fill="none" stroke="var(--gray-400)" stroke-width="2" />
-                <path d="M 4,6 C 2,1 6,1 10,4 M 16,6 C 18,1 14,1 10,4" fill="none" stroke="var(--gray-400)" stroke-width="2" />
-              </g>
-              <!-- WebAssembly -->
-              <g transform="translate(68, 2)">
-                <text x="0" y="16" font-family="sans-serif" font-weight="900" font-size="14" letter-spacing="-1">WASM</text>
-              </g>
-              <!-- DOS -->
-              <g transform="translate(118, 2)">
-                <text x="0" y="16" font-family="sans-serif" font-weight="900" font-size="14">DOS</text>
-              </g>
-              <!-- Visual Plus/More Indicator -->
-              <g transform="translate(148, 10)">
-                <circle cx="6" cy="2" r="1.5" fill="var(--gray-400)"/>
-                <circle cx="10" cy="2" r="1.5" fill="var(--gray-400)"/>
-                <circle cx="14" cy="2" r="1.5" fill="var(--gray-400)"/>
-              </g>
-            </svg>
-          </div>
+  
+  <nav aria-label="Main Navigation">
+    <a href="/" class="nav-brand" translate="no">&num;rewriteInC</a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#open-source">Open Source</a>
+      <a href="#pricing" class="btn btn-outline" aria-label="Sign in to your account">Sign In</a>
+    </div>
+  </nav>
 
-          <!-- Thick Divider between OS and Languages -->
-          <div class="pattern-divider" style="margin: 0.5rem 0;"></div>
-
-          <!-- Lang Row 1 -->
-          <div class="pattern-row" aria-label="Programming Languages: Python, JavaScript, C++, Rust">
-            <svg viewBox="0 0 160 24" width="160" height="24" aria-hidden="true" fill="var(--gray-400)">
-              <!-- Python -->
-              <g transform="translate(0, 0) scale(0.8)">
-                <path d="M14.2,0H10C4.5,0,0,4.5,0,10v4.2c0,5.5,4.5,10,10,10h4.2V20H10c-2.3,0-4.2-1.9-4.2-4.2v-1.7h14.2c2.3,0,4.2-1.9,4.2-4.2V4.2C24.2,1.9,22.3,0,20,0H14.2z M8.3,5c0.9,0,1.7,0.8,1.7,1.7S9.2,8.3,8.3,8.3S6.7,7.6,6.7,6.7S7.4,5,8.3,5z" />
-                <path d="M15.8,30h4.2c5.5,0,10-4.5,10-10v-4.2c0-5.5-4.5-10-10-10h-4.2v4.2H20c2.3,0,4.2,1.9,4.2,4.2v1.7H10c-2.3,0-4.2,1.9-4.2,4.2v5.8C5.8,28.1,7.7,30,10,30h5.8V30z M21.7,25c-0.9,0-1.7-0.8-1.7-1.7s0.8-1.7,1.7-1.7s1.7,0.8,1.7,1.7S22.6,25,21.7,25z" />
-              </g>
-              <!-- JS -->
-              <g transform="translate(40, 2)">
-                <rect width="20" height="20" rx="2" />
-                <text x="3" y="15" font-family="sans-serif" font-weight="bold" font-size="12" fill="#fff">JS</text>
-              </g>
-              <!-- C++ -->
-              <g transform="translate(80, 2)">
-                <text x="0" y="16" font-family="sans-serif" font-weight="900" font-size="16">C++</text>
-              </g>
-              <!-- Rust -->
-              <g transform="translate(120, 2) scale(1.1)">
-                <path d="M18.8,8.2 L20,7 C19.3,5.2 18,3.6 16.3,2.6 L15,4.2 C13.5,3.7 11.9,3.7 10.4,4.2 L9.1,2.6 C7.4,3.6 6.1,5.2 5.4,7 L6.6,8.2 C6,9.5 5.8,11 6,12.5 L4.2,13.4 C4.5,15.3 5.4,17 6.8,18.3 L8.2,17 C9.5,17.8 11.1,18.1 12.7,18 L13.6,19.8 C15.5,19.5 17.2,18.6 18.5,17.2 L17.2,15.8 C18,14.5 18.3,12.9 18.2,11.3 L20,10.4 C19.9,9.6 19.4,8.8 18.8,8.2 Z M12.7,14.5 C10.8,14.5 9.2,13 9.2,11.1 C9.2,9.2 10.8,7.6 12.7,7.6 C14.6,7.6 16.2,9.2 16.2,11.1 C16.2,13 14.6,14.5 12.7,14.5 Z" />
-                <text x="9" y="15" font-family="sans-serif" font-weight="bold" font-size="11" fill="#fff">R</text>
-              </g>
-            </svg>
-          </div>
-          
-          <!-- Lang Row 2 -->
-          <div class="pattern-row" aria-label="More Programming Languages: Ruby, Go, Java, Swift">
-            <svg viewBox="0 0 160 24" width="160" height="24" aria-hidden="true" fill="var(--gray-400)">
-              <!-- Ruby -->
-              <g transform="translate(2, 4)">
-                <path d="M4.5,0 L11.5,0 L16,4.5 L8,16 L0,4.5 Z" />
-                <path d="M4.5,0 L8,16 M11.5,0 L8,16 M0,4.5 L16,4.5" fill="none" stroke="#fff" stroke-width="0.5" />
-              </g>
-              <!-- Go -->
-              <g transform="translate(42, 4)">
-                <text x="0" y="14" font-family="sans-serif" font-weight="900" font-size="16">Go</text>
-              </g>
-              <!-- Java -->
-              <g transform="translate(80, 2) scale(0.75)">
-                <path d="M12.9,20.4 C18.1,20.4 22.3,18.2 23.4,14.8 C23.6,14 23.4,13.5 22.8,13.5 C22.4,13.5 22,13.8 21.8,14.4 C20.9,16.7 17.4,18.4 12.9,18.4 C8.4,18.4 4.9,16.7 4,14.4 C3.8,13.8 3.4,13.5 3,13.5 C2.4,13.5 2.2,14 2.4,14.8 C3.5,18.2 7.7,20.4 12.9,20.4 Z M16,11.9 C16,10.4 14.7,9.1 13.1,9.1 C11.5,9.1 10.2,10.4 10.2,11.9 C10.2,13.4 11.5,14.7 13.1,14.7 C14.7,14.7 16,13.4 16,11.9 Z M12.9,0 C12,0 11.3,0.7 11.3,1.6 L11.3,7 C11.3,7.9 12,8.6 12.9,8.6 C13.8,8.6 14.5,7.9 14.5,7 L14.5,1.6 C14.5,0.7 13.8,0 12.9,0 Z" />
-              </g>
-              <!-- Swift -->
-              <g transform="translate(120, 0) scale(0.9)">
-                <path d="M14.5,1 C13.5,4 12.5,7 8.5,8 C7,8.5 4.5,8 2,6.5 C3.5,9.5 7,12 11,12 C9,13.5 5,14 1,13.5 C4,16.5 9.5,17 15,14 C13,16 9.5,17.5 5,18 C11,21 18,20.5 22.5,14.5 C20.5,15 18,14.5 16,13 C18.5,11.5 20,8.5 21.5,5.5 C19,7.5 16,8 14.5,8 L14.5,1 Z" />
-              </g>
-              <!-- Visual Plus/More Indicator -->
-              <g transform="translate(148, 10)">
-                <circle cx="6" cy="2" r="1.5" fill="var(--gray-400)"/>
-                <circle cx="10" cy="2" r="1.5" fill="var(--gray-400)"/>
-                <circle cx="14" cy="2" r="1.5" fill="var(--gray-400)"/>
-              </g>
-            </svg>
-          </div>
-        </div>
+  <header class="hero" aria-labelledby="hero-heading">
+    <div class="hero-gradient" aria-hidden="true"></div>
+    <div class="hero-content">
+      <h1 id="hero-heading">Automated <span translate="no">C SDK</span> Generation for the Enterprise</h1>
+      <p>Instantly generate highly optimized, memory-safe, zero-dependency <span translate="no">C SDKs</span> directly from your <span translate="no">OpenAPI</span> specifications. Built for edge computing, <span translate="no">IoT</span>, and high-frequency trading.</p>
+      <div class="hero-actions">
+        <a href="#pricing" class="btn btn-primary btn-large">Start Generating Free</a>
+        <a href="mailto:samuel@rewriteinc.io" class="btn btn-outline btn-large">Contact Sales</a>
       </div>
     </div>
   </header>
 
   <main id="main-content" class="container">
-    <div class="defense-box">
-      <p><strong>Why rewrite in C?</strong> Build in the lowest common denominator: every language can call it, it runs on every platform, is smaller and faster, is computation modality independent (single/multi threaded, async/sync,  messaging-passing / IPC / one process, etc.) and you win every tech nerd neckbeard debate.</p>
-      <p style="margin-top: 1rem;"><strong>License:</strong> All projects are Apache-2.0, MIT, or CC0 licensed.</p>
+    
+    <section id="features" aria-labelledby="features-heading">
+      <div class="section-header">
+        <h2 id="features-heading">Why <span translate="no">C SDKs</span>?</h2>
+        <p>Distribute your API to embedded systems, legacy applications, and extreme-performance environments without forcing your clients to write manual bindings.</p>
+      </div>
+
+      <div class="features-grid">
+        <article class="feature-card">
+          <div class="feature-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="24" height="24" focusable="false"><path d="M13 2.05v3.03c3.39.49 6 3.39 6 6.92 0 .9-.21 1.76-.58 2.54l2.6 1.53c.64-1.22.98-2.6.98-4.07 0-4.83-3.64-8.83-8.31-9.42L13 2.05zM11 2.05L11 5.08C7.61 5.57 5 8.47 5 12c0 3.53 2.61 6.43 6 6.92v3.03c-4.67-.59-8.31-4.59-8.31-9.42 0-4.83 3.64-8.83 8.31-9.42v-.06zM13 18.89v3.03c4.67-.59 8.31-4.59 8.31-9.42 0-1.47-.34-2.85-.98-4.07l-2.6 1.53c.37.78.58 1.64.58 2.54 0 3.53-2.61 6.43-6 6.92z"/></svg>
+          </div>
+          <h3><span translate="no">IoT</span> & Edge Ready</h3>
+          <p>Generated SDKs have minimal memory footprints and compile natively on <span translate="no">RTOS</span>, <span translate="no">Linux</span>, <span translate="no">Android</span>, and <span translate="no">Windows</span>, making them perfect for fleet management.</p>
+        </article>
+        
+        <article class="feature-card">
+          <div class="feature-icon" aria-hidden="true">
+             <svg viewBox="0 0 24 24" width="24" height="24" focusable="false"><path d="M16 11V3H8v6H2v12h20V11h-6zm-6-6h4v14h-4V5zm-6 6h4v8H4v-8zm16 8h-4v-6h4v6z"/></svg>
+          </div>
+          <h3>Zero Dependencies</h3>
+          <p>Our generators emit pure <span translate="no">ANSI C (C89)</span>. No heavy runtimes, no external library hell. Drop the source files directly into your customers' build systems.</p>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="24" height="24" focusable="false"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
+          </div>
+          <h3><span translate="no">CI/CD</span> Integration</h3>
+          <p>Automate generation. Hook our <span translate="no">SaaS</span> directly into your <span translate="no">GitHub</span> or <span translate="no">GitLab</span> pipelines to ensure your <span translate="no">C SDKs</span> are always in sync with your latest API spec.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="ffi-advantage" aria-labelledby="ffi-heading" style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 8px; padding: 3rem 2rem; margin-bottom: 4rem; text-align: center; position: relative; overflow: hidden;">
+      <div style="position: absolute; inset-block-start: 0; inset-inline-start: 0; width: 4px; height: 100%; background: var(--electric-violet);" aria-hidden="true"></div>
+      <h2 id="ffi-heading" style="font-family: 'Inter Tight', sans-serif; font-size: 2rem; margin-top: 0; margin-bottom: 1rem;">The <span translate="no">FFI</span> Multiplier Effect</h2>
+      <p style="color: var(--gray-700); font-size: 1.1rem; max-width: 700px; margin: 0 auto 2rem; line-height: 1.6;">
+        Look at <span translate="no">AWS</span>, <span translate="no">Stripe</span>, or <span translate="no">Twilio</span>. They spend millions of dollars and thousands of engineering hours maintaining separate, hand-written SDKs for <span translate="no">Python</span>, <span translate="no">Node.js</span>, <span translate="no">Ruby</span>, <span translate="no">Java</span>, <span translate="no">Go</span>, and <span translate="no">.NET</span>. 
+      </p>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 1.5rem;">
+        <div style="font-size: 1.25rem; font-weight: 600; color: var(--gray-900);">
+          Stop rewriting your SDKs.
+        </div>
+        <p style="color: var(--gray-700); max-width: 600px; margin: 0; line-height: 1.5;">
+          Because <span translate="no">C</span> is the universal language of computing, every modern programming language has a <strong>Foreign Function Interface (FFI)</strong> that can call <span translate="no">C</span> code directly. By generating a single, memory-safe <span translate="no">C SDK</span> from your <span translate="no">OpenAPI</span> spec, you instantly unlock the ability to generate thin wrappers for <strong>40+ languages</strong> automatically.
+        </p>
+        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-top: 1rem;" aria-label="Supported Languages via FFI">
+          <span style="background: var(--gray-100); border: 1px solid var(--border-color); padding: 4px 12px; border-radius: 16px; font-size: 0.85rem; font-weight: 500; color: var(--gray-700);" translate="no">Python (ctypes/cffi)</span>
+          <span style="background: var(--gray-100); border: 1px solid var(--border-color); padding: 4px 12px; border-radius: 16px; font-size: 0.85rem; font-weight: 500; color: var(--gray-700);" translate="no">Node.js (N-API)</span>
+          <span style="background: var(--gray-100); border: 1px solid var(--border-color); padding: 4px 12px; border-radius: 16px; font-size: 0.85rem; font-weight: 500; color: var(--gray-700);" translate="no">Rust (bindgen)</span>
+          <span style="background: var(--gray-100); border: 1px solid var(--border-color); padding: 4px 12px; border-radius: 16px; font-size: 0.85rem; font-weight: 500; color: var(--gray-700);" translate="no">Java (JNI/Panama)</span>
+          <span style="background: var(--gray-100); border: 1px solid var(--border-color); padding: 4px 12px; border-radius: 16px; font-size: 0.85rem; font-weight: 500; color: var(--gray-700);" translate="no">Go (CGO)</span>
+          <span style="background: var(--gray-100); border: 1px solid var(--border-color); padding: 4px 12px; border-radius: 16px; font-size: 0.85rem; font-weight: 500; color: var(--gray-700);" translate="no">Ruby (FFI)</span>
+          <span style="background: var(--gray-100); border: 1px solid var(--border-color); padding: 4px 12px; border-radius: 16px; font-size: 0.85rem; font-weight: 500; color: var(--gray-700);">+ 30 more</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing" aria-labelledby="pricing-heading">
+      <div class="section-header">
+        <h2 id="pricing-heading">Transparent Pricing</h2>
+        <p>Scale your API reach. Pay only for what you generate.</p>
+      </div>
+
+      <div class="pricing-grid">
+        <!-- Starter Plan -->
+        <article class="pricing-card">
+          <h3>Starter</h3>
+          <div class="price">$0<span aria-label="per month"> /mo</span></div>
+          <p class="pricing-desc">For open-source projects and small APIs testing the waters.</p>
+          <ul class="pricing-features">
+            <li><svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" focusable="false"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg> 50 API Endpoints limit</li>
+            <li><svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" focusable="false"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg> Manual Generation via Web UI</li>
+            <li><svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" focusable="false"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg> Community Support</li>
+            <li><svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" focusable="false"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg> Standard <span translate="no">ANSI C</span> Templates</li>
+          </ul>
+          <a href="#" class="btn btn-outline" style="margin-top: auto;" aria-label="Sign up for the free Starter plan">Sign Up Free</a>
+        </article>
+
+        <!-- Pro Plan -->
+        <article class="pricing-card featured">
+          <div class="pricing-badge" aria-label="Most Popular Plan">Most Popular</div>
+          <h3>Pro</h3>
+          <div class="price">$499<span aria-label="per month"> /mo</span></div>
+          <p class="pricing-desc">For growing startups needing automated <span translate="no">C SDK</span> pipelines.</p>
+          <ul class="pricing-features">
+            <li><svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" focusable="false"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg> Unlimited API Endpoints</li>
+            <li><svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" focusable="false"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg> <span translate="no">GitHub / GitLab CI</span> Integration</li>
+            <li><svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" focusable="false"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg> Priority Email Support</li>
+            <li><svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" focusable="false"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg> Hosted SDK Artifact Repository</li>
+          </ul>
+          <a href="#" class="btn btn-primary" style="margin-top: auto;" aria-label="Start 14-day free trial for the Pro plan">Start 14-Day Trial</a>
+        </article>
+
+        <!-- Enterprise Plan -->
+        <article class="pricing-card">
+          <h3>Enterprise</h3>
+          <div class="price">Custom</div>
+          <p class="pricing-desc">For enterprise workloads requiring custom templates and SLAs.</p>
+          <ul class="pricing-features">
+            <li><svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" focusable="false"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg> Custom <span translate="no">C</span> Generation Templates</li>
+            <li><svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" focusable="false"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg> Dedicated Account Manager</li>
+            <li><svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" focusable="false"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg> 99.99% Uptime SLA</li>
+            <li><svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" focusable="false"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg> Single Tenant / <span translate="no">VPC</span> Deployment</li>
+          </ul>
+          <a href="mailto:samuel@rewriteinc.io" class="btn btn-outline" style="margin-top: auto;" aria-label="Contact sales for the Enterprise plan">Contact Sales</a>
+        </article>
+      </div>
+    </section>
+
+    <section id="open-source" aria-labelledby="os-heading" style="margin-top: 5rem; padding-top: 3rem; border-top: 1px solid var(--border-color);">
+      <h2 id="os-heading" style="font-family: 'Inter Tight', sans-serif; font-size: 2rem; text-align: center; margin-bottom: 1rem;">Powered by our Open Source Core</h2>
+      <p style="text-align: center; color: var(--gray-700); margin-bottom: 3rem; max-width: 600px; margin-inline: auto;">Our SaaS is built on top of robust, battle-tested C89 frameworks. All core technologies remain open-source and free forever.</p>
+      
+      <h3 class="repo-section-title" style="text-align: left; font-size: 1.25rem;">Frameworks for 'end' developers</h3>
+      <div class="repo-grid" style="margin-bottom: 3rem;">
+        <!-- cdd-c -->
+        <div class="repo-card">
+          <div class="repo-header">
+            <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z"></path></svg>
+            <a href="https://github.com/SamuelMarks/cdd-c" class="repo-title" target="_blank" rel="noopener noreferrer">SamuelMarks/cdd-c</a>
+          </div>
+          <div class="repo-desc">
+            The core engine: OpenAPI ↔ C. Frontend for C, generating from code, single-file analysis, and emission.
+          </div>
+          <div class="repo-meta">
+            <span class="repo-lang"><span class="lang-color c" aria-hidden="true"></span> C</span>
+          </div>
+        </div>
+        
+        <!-- c-rest-framework -->
+        <div class="repo-card">
+          <div class="repo-header">
+            <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z"></path></svg>
+            <a href="https://github.com/SamuelMarks/c-rest-framework" class="repo-title" target="_blank" rel="noopener noreferrer">SamuelMarks/c-rest-framework</a>
+          </div>
+          <div class="repo-desc">
+            C REST Framework with builtin ORM (PostgreSQL, SQLite, MySQL) and OpenAPI. Native on Windows, Linux, macOS, DOS.
+          </div>
+          <div class="repo-meta">
+            <span class="repo-lang"><span class="lang-color c" aria-hidden="true"></span> C</span>
+          </div>
+        </div>
+
+        <!-- c-multiplatform -->
+        <div class="repo-card">
+          <div class="repo-header">
+            <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z"></path></svg>
+            <a href="https://github.com/SamuelMarks/c-multiplatform" class="repo-title" target="_blank" rel="noopener noreferrer">SamuelMarks/c-multiplatform</a>
+          </div>
+          <div class="repo-desc">
+            Cross platform GUI framework in ANSI C (C89), native for: Windows (GDI+); Linux (GTK+4); macOS (Cocoa); iOS; Android; web (WASM).
+          </div>
+          <div class="repo-meta">
+            <span class="repo-lang"><span class="lang-color c" aria-hidden="true"></span> C</span>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="repo-section-title" style="text-align: left; font-size: 1.25rem;">Libraries these depend on (and additional projects)</h3>
+      <div class="repo-grid">
+        <!-- c-abstract-http -->
+        <div class="repo-card">
+          <div class="repo-header">
+            <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z"></path></svg>
+            <a href="https://github.com/SamuelMarks/c-abstract-http" class="repo-title" target="_blank" rel="noopener noreferrer">SamuelMarks/c-abstract-http</a>
+          </div>
+          <div class="repo-desc">
+            HTTP/HTTPS client interface reusing abstractions for Windows, macOS, iOS, Android, GTK+4, with libcurl fallback.
+          </div>
+          <div class="repo-meta">
+            <span class="repo-lang"><span class="lang-color c" aria-hidden="true"></span> C</span>
+          </div>
+        </div>
+
+        <!-- c-fs -->
+        <div class="repo-card">
+          <div class="repo-header">
+            <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z"></path></svg>
+            <a href="https://github.com/SamuelMarks/c-fs" class="repo-title" target="_blank" rel="noopener noreferrer">SamuelMarks/c-fs</a>
+          </div>
+          <div class="repo-desc">
+            std::filesystem inspired interface for C89 (MSVC2005, Cygwin, MSVC2026, Linux, macOS, etc.)
+          </div>
+          <div class="repo-meta">
+            <span class="repo-lang"><span class="lang-color cpp" aria-hidden="true"></span> C++</span>
+          </div>
+        </div>
+
+        <!-- c-orm -->
+        <div class="repo-card">
+          <div class="repo-header">
+            <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z"></path></svg>
+            <a href="https://github.com/SamuelMarks/c-orm" class="repo-title" target="_blank" rel="noopener noreferrer">SamuelMarks/c-orm</a>
+          </div>
+          <div class="repo-desc">
+            SQLite & PostgreSQL compatible simple ORM for C. Alembic/diesel style schema migration support. VERY portable.
+          </div>
+          <div class="repo-meta">
+            <span class="repo-lang"><span class="lang-color c" aria-hidden="true"></span> C</span>
+          </div>
+        </div>
+
+        <!-- c89stringutils -->
+        <div class="repo-card">
+          <div class="repo-header">
+            <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z"></path></svg>
+            <a href="https://github.com/offscale/c89stringutils" class="repo-title" target="_blank" rel="noopener noreferrer">offscale/c89stringutils</a>
+          </div>
+          <div class="repo-desc">
+            string functions from newer standards / common non-standards for C89
+          </div>
+          <div class="repo-meta">
+            <span class="repo-lang"><span class="lang-color c" aria-hidden="true"></span> C</span>
+          </div>
+        </div>
+
+        <!-- c-str-span -->
+        <div class="repo-card">
+          <div class="repo-header">
+            <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z"></path></svg>
+            <a href="https://github.com/SamuelMarks/c-str-span" class="repo-title" target="_blank" rel="noopener noreferrer">SamuelMarks/c-str-span</a>
+          </div>
+          <div class="repo-desc">
+            UTF-8 replacement for C strings, supporting zero-copy use-cases (non-null-terminated).
+          </div>
+          <div class="repo-meta">
+            <span class="repo-lang"><span class="lang-color c" aria-hidden="true"></span> C</span>
+          </div>
+        </div>
+
+        <!-- c-ci -->
+        <div class="repo-card">
+          <div class="repo-header">
+            <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z"></path></svg>
+            <a href="https://github.com/SamuelMarks/c-ci" class="repo-title" target="_blank" rel="noopener noreferrer">SamuelMarks/c-ci</a>
+          </div>
+          <div class="repo-desc">
+            Shared GitHub actions for my C projects to build &amp; test on {MSVC,MinGW,Cygwin,Linux (gcc),macOS (clang)}
+          </div>
+          <div class="repo-meta">
+            <span class="repo-lang"><span class="lang-color c" aria-hidden="true"></span> C</span>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <h2 class="repo-section-title">Frameworks for 'end' developers</h2>
-    <div class="repo-grid featured">
-      <!-- c-rest-framework -->
-      <div class="repo-card">
-        <div class="repo-header">
-          <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z"></path></svg>
-          <a href="https://github.com/SamuelMarks/c-rest-framework" class="repo-title" target="_blank" rel="noopener noreferrer">SamuelMarks/c-rest-framework</a>
-        </div>
-        <div class="repo-desc">
-          C REST Framework with builtin ORM (PostgreSQL, SQLite, MySQL) and OpenAPI; native on DOS, Cygwin, Windows, Linux, macOS, etc.
-        </div>
-        <div class="repo-meta">
-          <span class="repo-lang">
-            <span class="lang-color c" aria-hidden="true"></span> C
-          </span>
-          <a href="https://github.com/SamuelMarks/c-rest-framework/stargazers" class="repo-stat" target="_blank" rel="noopener noreferrer" aria-label="0 stars">
-            <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Zm0 2.445L6.615 5.5a.75.75 0 0 1-.564.41l-3.097.45 2.24 2.184a.75.75 0 0 1 .216.664l-.528 3.084 2.769-1.456a.75.75 0 0 1 .698 0l2.77 1.456-.53-3.084a.75.75 0 0 1 .216-.664l2.24-2.183-3.096-.45a.75.75 0 0 1-.564-.41L8 2.694Z"></path></svg> 0
-          </a>
-        </div>
-      </div>
-      <!-- c-multiplatform -->
-      <div class="repo-card">
-        <div class="repo-header">
-          <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z"></path></svg>
-          <a href="https://github.com/SamuelMarks/c-multiplatform" class="repo-title" target="_blank" rel="noopener noreferrer">SamuelMarks/c-multiplatform</a>
-        </div>
-        <div class="repo-desc">
-          Cross platform GUI framework in ANSI C (C89), native for: Windows (GDI+); Linux (GTK+4); macOS (Cocoa); iOS; Android; web (WASM). Material 3; Microsoft Fluent 2; Apple Cupertino.
-        </div>
-        <div class="repo-meta">
-          <span class="repo-lang">
-            <span class="lang-color c" aria-hidden="true"></span> C
-          </span>
-          <a href="https://github.com/SamuelMarks/c-multiplatform/stargazers" class="repo-stat" target="_blank" rel="noopener noreferrer" aria-label="0 stars">
-            <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Zm0 2.445L6.615 5.5a.75.75 0 0 1-.564.41l-3.097.45 2.24 2.184a.75.75 0 0 1 .216.664l-.528 3.084 2.769-1.456a.75.75 0 0 1 .698 0l2.77 1.456-.53-3.084a.75.75 0 0 1 .216-.664l2.24-2.183-3.096-.45a.75.75 0 0 1-.564-.41L8 2.694Z"></path></svg> 0
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <h2 class="repo-section-title">Libraries these depend on</h2>
-    <div class="repo-grid">
-      <!-- c-fs -->
-      <div class="repo-card">
-        <div class="repo-header">
-          <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z"></path></svg>
-          <a href="https://github.com/SamuelMarks/c-fs" class="repo-title" target="_blank" rel="noopener noreferrer">SamuelMarks/c-fs</a>
-        </div>
-        <div class="repo-desc">
-          std::filesystem inspired interface for C89 (MSVC2005, Cygwin, MSVC2026, Linux, macOS, etc.)
-        </div>
-        <div class="repo-meta">
-          <span class="repo-lang">
-            <span class="lang-color cpp" aria-hidden="true"></span> C++
-          </span>
-          <a href="https://github.com/SamuelMarks/c-fs/stargazers" class="repo-stat" target="_blank" rel="noopener noreferrer" aria-label="1 star">
-            <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Zm0 2.445L6.615 5.5a.75.75 0 0 1-.564.41l-3.097.45 2.24 2.184a.75.75 0 0 1 .216.664l-.528 3.084 2.769-1.456a.75.75 0 0 1 .698 0l2.77 1.456-.53-3.084a.75.75 0 0 1 .216-.664l2.24-2.183-3.096-.45a.75.75 0 0 1-.564-.41L8 2.694Z"></path></svg> 1
-          </a>
-        </div>
-      </div>
-      <!-- c-abstract-http -->
-      <div class="repo-card">
-        <div class="repo-header">
-          <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z"></path></svg>
-          <a href="https://github.com/SamuelMarks/c-abstract-http" class="repo-title" target="_blank" rel="noopener noreferrer">SamuelMarks/c-abstract-http</a>
-        </div>
-        <div class="repo-desc">
-          HTTP/HTTPS client interface reusing abstractions for Windows (WinHTTP,WinINet), macOS (CommonCrypto), iOS, Android, GTK+4 (libsoup), with fallback to libcurl
-        </div>
-        <div class="repo-meta">
-          <span class="repo-lang">
-            <span class="lang-color c" aria-hidden="true"></span> C
-          </span>
-          <a href="https://github.com/SamuelMarks/c-abstract-http/stargazers" class="repo-stat" target="_blank" rel="noopener noreferrer" aria-label="0 stars">
-            <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Zm0 2.445L6.615 5.5a.75.75 0 0 1-.564.41l-3.097.45 2.24 2.184a.75.75 0 0 1 .216.664l-.528 3.084 2.769-1.456a.75.75 0 0 1 .698 0l2.77 1.456-.53-3.084a.75.75 0 0 1 .216-.664l2.24-2.183-3.096-.45a.75.75 0 0 1-.564-.41L8 2.694Z"></path></svg> 0
-          </a>
-        </div>
-      </div>
-      <!-- c-orm -->
-      <div class="repo-card">
-        <div class="repo-header">
-          <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z"></path></svg>
-          <a href="https://github.com/SamuelMarks/c-orm" class="repo-title" target="_blank" rel="noopener noreferrer">SamuelMarks/c-orm</a>
-        </div>
-        <div class="repo-desc">
-          SQLite & PostgreSQL compatible simple ORM for C. Alembic/diesel style schema migration support. VERY portable.
-        </div>
-        <div class="repo-meta">
-          <span class="repo-lang">
-            <span class="lang-color c" aria-hidden="true"></span> C
-          </span>
-          <a href="https://github.com/SamuelMarks/c-orm/stargazers" class="repo-stat" target="_blank" rel="noopener noreferrer" aria-label="0 stars">
-            <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Zm0 2.445L6.615 5.5a.75.75 0 0 1-.564.41l-3.097.45 2.24 2.184a.75.75 0 0 1 .216.664l-.528 3.084 2.769-1.456a.75.75 0 0 1 .698 0l2.77 1.456-.53-3.084a.75.75 0 0 1 .216-.664l2.24-2.183-3.096-.45a.75.75 0 0 1-.564-.41L8 2.694Z"></path></svg> 0
-          </a>
-        </div>
-      </div>
-      <!-- cdd-c -->
-      <div class="repo-card">
-        <div class="repo-header">
-          <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z"></path></svg>
-          <a href="https://github.com/SamuelMarks/cdd-c" class="repo-title" target="_blank" rel="noopener noreferrer">SamuelMarks/cdd-c</a>
-        </div>
-        <div class="repo-desc">
-          OpenAPI ↔ C. Frontend for C, concentrating on: generation from code; single-file analysis; modification; and emission (prettyprinting).
-        </div>
-        <div class="repo-meta">
-          <span class="repo-lang">
-            <span class="lang-color c" aria-hidden="true"></span> C
-          </span>
-          <a href="https://github.com/SamuelMarks/cdd-c/stargazers" class="repo-stat" target="_blank" rel="noopener noreferrer" aria-label="9 stars">
-            <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Zm0 2.445L6.615 5.5a.75.75 0 0 1-.564.41l-3.097.45 2.24 2.184a.75.75 0 0 1 .216.664l-.528 3.084 2.769-1.456a.75.75 0 0 1 .698 0l2.77 1.456-.53-3.084a.75.75 0 0 1 .216-.664l2.24-2.183-3.096-.45a.75.75 0 0 1-.564-.41L8 2.694Z"></path></svg> 9
-          </a>
-          <a href="https://github.com/SamuelMarks/cdd-c/network/members" class="repo-stat" target="_blank" rel="noopener noreferrer" aria-label="2 forks">
-            <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M5 5.372v.878c0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75v-.878a2.25 2.25 0 1 1 1.5 0v.878a2.25 2.25 0 0 1-2.25 2.25h-1.5v2.128a2.251 2.251 0 1 1-1.5 0V8.5h-1.5A2.25 2.25 0 0 1 3.5 6.25v-.878a2.25 2.25 0 1 1 1.5 0ZM5 3.25a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0Zm6.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm-3 8.75a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0Z"></path></svg> 2
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <h2 class="repo-section-title">Additional projects</h2>
-    <div class="repo-grid">
-      <!-- c89stringutils -->
-      <div class="repo-card">
-        <div class="repo-header">
-          <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z"></path></svg>
-          <a href="https://github.com/offscale/c89stringutils" class="repo-title" target="_blank" rel="noopener noreferrer">offscale/c89stringutils</a>
-        </div>
-        <div class="repo-desc">
-          string functions from newer standards / common non-standards for C89
-        </div>
-        <div class="repo-meta">
-          <span class="repo-lang">
-            <span class="lang-color c" aria-hidden="true"></span> C
-          </span>
-          <a href="https://github.com/offscale/c89stringutils/stargazers" class="repo-stat" target="_blank" rel="noopener noreferrer" aria-label="2 stars">
-            <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Zm0 2.445L6.615 5.5a.75.75 0 0 1-.564.41l-3.097.45 2.24 2.184a.75.75 0 0 1 .216.664l-.528 3.084 2.769-1.456a.75.75 0 0 1 .698 0l2.77 1.456-.53-3.084a.75.75 0 0 1 .216-.664l2.24-2.183-3.096-.45a.75.75 0 0 1-.564-.41L8 2.694Z"></path></svg> 2
-          </a>
-        </div>
-      </div>
-      <!-- c-str-span -->
-      <div class="repo-card">
-        <div class="repo-header">
-          <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z"></path></svg>
-          <a href="https://github.com/SamuelMarks/c-str-span" class="repo-title" target="_blank" rel="noopener noreferrer">SamuelMarks/c-str-span</a>
-        </div>
-        <div class="repo-desc">
-          UTF-8 replacement for C strings, supporting zero-copy use-cases (non-null-terminated).
-        </div>
-        <div class="repo-meta">
-          <span class="repo-lang">
-            <span class="lang-color c" aria-hidden="true"></span> C
-          </span>
-          <a href="https://github.com/SamuelMarks/c-str-span/stargazers" class="repo-stat" target="_blank" rel="noopener noreferrer" aria-label="1 star">
-            <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Zm0 2.445L6.615 5.5a.75.75 0 0 1-.564.41l-3.097.45 2.24 2.184a.75.75 0 0 1 .216.664l-.528 3.084 2.769-1.456a.75.75 0 0 1 .698 0l2.77 1.456-.53-3.084a.75.75 0 0 1 .216-.664l2.24-2.183-3.096-.45a.75.75 0 0 1-.564-.41L8 2.694Z"></path></svg> 1
-          </a>
-        </div>
-      </div>
-      <!-- c-ci -->
-      <div class="repo-card">
-        <div class="repo-header">
-          <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z"></path></svg>
-          <a href="https://github.com/SamuelMarks/c-ci" class="repo-title" target="_blank" rel="noopener noreferrer">SamuelMarks/c-ci</a>
-        </div>
-        <div class="repo-desc">
-          Shared GitHub actions for my C projects to build &amp; test on {MSVC,MinGW,Cygwin,Linux (gcc),macOS (clang)}
-        </div>
-        <div class="repo-meta">
-          <span class="repo-lang">
-            <span class="lang-color c" aria-hidden="true"></span> C
-          </span>
-          <a href="https://github.com/SamuelMarks/c-ci/stargazers" class="repo-stat" target="_blank" rel="noopener noreferrer" aria-label="0 stars">
-            <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Zm0 2.445L6.615 5.5a.75.75 0 0 1-.564.41l-3.097.45 2.24 2.184a.75.75 0 0 1 .216.664l-.528 3.084 2.769-1.456a.75.75 0 0 1 .698 0l2.77 1.456-.53-3.084a.75.75 0 0 1 .216-.664l2.24-2.183-3.096-.45a.75.75 0 0 1-.564-.41L8 2.694Z"></path></svg> 0
-          </a>
-        </div>
-      </div>
-    </div>
   </main>
 
   <footer class="site-footer">
-    <p>&copy; Samuel Marks 2026</p>
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <h4>&num;rewriteInC</h4>
+        <p>Bringing modern API infrastructure to the lowest common denominator. High performance, zero dependencies.</p>
+      </div>
+      <div class="footer-links">
+        <h5>Product</h5>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+          <li><a href="#modal-docs">Documentation</a></li>
+          <li><a href="https://github.com/SamuelMarks" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h5>Company</h5>
+        <ul>
+          <li><a href="#modal-about">About Us</a></li>
+          <li><a href="mailto:samuel@rewriteinc.io">Contact Sales</a></li>
+          <li><a href="#modal-privacy">Privacy Policy</a></li>
+          <li><a href="#modal-terms">Terms of Service</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>&copy; 2026 RewriteInC Inc. All rights reserved.</div>
+      <div>Designed for the future of C.</div>
+    </div>
   </footer>
+
+  <!-- CSS-Only Modals -->
+  <div id="modal-docs" class="modal-overlay">
+    <a href="#_" class="modal-backdrop-close" aria-label="Close modal" tabindex="-1"></a>
+    <div class="modal-content" role="dialog" aria-labelledby="modal-docs-title">
+      <a href="#_" class="modal-close" aria-label="Close modal">&times;</a>
+      <h2 id="modal-docs-title">Documentation</h2>
+      <p>Comprehensive documentation and API references are currently being updated for the new SaaS platform. Check back soon for integration guides, C template customization tutorials, and CI/CD setup instructions.</p>
+    </div>
+  </div>
+
+  <div id="modal-about" class="modal-overlay">
+    <a href="#_" class="modal-backdrop-close" aria-label="Close modal" tabindex="-1"></a>
+    <div class="modal-content" role="dialog" aria-labelledby="modal-about-title">
+      <a href="#_" class="modal-close" aria-label="Close modal">&times;</a>
+      <h2 id="modal-about-title">About Us</h2>
+      <p>RewriteInC Inc. was founded by systems engineers dedicated to bringing modern API infrastructure to the lowest common denominator. Our mission is to eliminate duplicate engineering effort across languages through memory-safe, ultra-fast C code.</p>
+    </div>
+  </div>
+
+  <div id="modal-privacy" class="modal-overlay">
+    <a href="#_" class="modal-backdrop-close" aria-label="Close modal" tabindex="-1"></a>
+    <div class="modal-content" role="dialog" aria-labelledby="modal-privacy-title">
+      <a href="#_" class="modal-close" aria-label="Close modal">&times;</a>
+      <h2 id="modal-privacy-title">Privacy Policy</h2>
+      <p>We take your privacy seriously. We only collect the minimal information required to operate the SaaS platform and generate your SDKs. We do not sell your API specifications or personal data to third parties.</p>
+    </div>
+  </div>
+
+  <div id="modal-terms" class="modal-overlay">
+    <a href="#_" class="modal-backdrop-close" aria-label="Close modal" tabindex="-1"></a>
+    <div class="modal-content" role="dialog" aria-labelledby="modal-terms-title">
+      <a href="#_" class="modal-close" aria-label="Close modal">&times;</a>
+      <h2 id="modal-terms-title">Terms of Service</h2>
+      <p>By using our OpenAPI to C SDK generation service, you agree to our standard terms. Generated code is provided under a permissive license (MIT or Apache 2.0) for your unrestricted commercial use. You are responsible for the specifications you upload.</p>
+    </div>
+  </div>
+
+  <!-- Progressive Enhancement: A11y improvements for modals when JS is enabled -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const modals = document.querySelectorAll('.modal-overlay');
+      let lastFocusedElement = null;
+
+      window.addEventListener('hashchange', () => {
+        const targetModal = document.querySelector(window.location.hash);
+        
+        if (targetModal && targetModal.classList.contains('modal-overlay')) {
+          lastFocusedElement = document.activeElement;
+          const modalContent = targetModal.querySelector('.modal-content');
+          if (modalContent) {
+            modalContent.setAttribute('tabindex', '-1');
+            modalContent.setAttribute('aria-modal', 'true');
+            modalContent.setAttribute('role', 'dialog');
+            modalContent.focus();
+            targetModal.addEventListener('keydown', trapFocus);
+          }
+        } else {
+          modals.forEach(modal => {
+            modal.removeEventListener('keydown', trapFocus);
+            const content = modal.querySelector('.modal-content');
+            if (content) {
+              content.removeAttribute('aria-modal');
+              content.removeAttribute('tabindex');
+            }
+          });
+          if (lastFocusedElement) {
+            lastFocusedElement.focus();
+            lastFocusedElement = null;
+          }
+        }
+      });
+
+      function trapFocus(e) {
+        if (e.key !== 'Tab') return;
+        const focusableElements = this.querySelectorAll('a[href], button, textarea, input[type="text"], input[type="radio"], input[type="checkbox"], select, [tabindex]:not([tabindex="-1"])');
+        if (focusableElements.length === 0) return;
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement || document.activeElement === this.querySelector('.modal-content')) {
+            lastElement.focus();
+            e.preventDefault();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            firstElement.focus();
+            e.preventDefault();
+          }
+        }
+      }
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && window.location.hash.startsWith('#modal-')) {
+          window.location.hash = '#_';
+        }
+      });
+    });
+  </script>
 </body>
 </html>
